@@ -851,8 +851,8 @@
             onClick={onNext}
             disabled={players.length < 3}
             className={`flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-all ${players.length >= 3
-                ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+              ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
               }`}
           >
             {players.length < 3 ? '3 Players Minimum' : 'Configure'}
@@ -887,6 +887,24 @@
               <div style={{ width: `${civPct}%` }} className="bg-green-500 transition-all duration-300" />
               <div style={{ width: `${ucPct}%` }} className="bg-yellow-500 transition-all duration-300" />
               <div style={{ width: `${mwPct}%` }} className="bg-gray-300 transition-all duration-300" />
+            </div>
+          </div>
+
+          <div className="flex-none space-y-3">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest pl-1">Word Difficulty</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {['easy', 'medium', 'hard', 'all'].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => { sfx.playTap(); setSettings({ ...settings, difficulty: d }); }}
+                  className={`py-2 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all ${settings.difficulty === d
+                      ? 'bg-cyan-900/40 border-cyan-500 neon-border-cyan text-cyan-400'
+                      : 'bg-gray-900/60 border-gray-800 text-gray-500'
+                    }`}
+                >
+                  {d}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -1034,17 +1052,17 @@
             </div>
           ) : (
             <div className={`space-y-8 w-full max-w-sm animate-fade-in-up p-8 rounded-3xl border ${(currentPlayer.role === 'civilian' || currentPlayer.role === 'undercover') ? 'bg-green-950/40 border-green-500/50 neon-border-green' :
-                currentPlayer.role === 'inspector' ? 'bg-blue-950/40 border-blue-500/50 neon-border-blue' :
-                  currentPlayer.role === 'jester' ? 'bg-pink-950/40 border-pink-500/50 neon-border-pink' :
-                    'bg-gray-100 border-white shadow-[0_0_20px_rgba(255,255,255,0.8)]'
+              currentPlayer.role === 'inspector' ? 'bg-blue-950/40 border-blue-500/50 neon-border-blue' :
+                currentPlayer.role === 'jester' ? 'bg-pink-950/40 border-pink-500/50 neon-border-pink' :
+                  'bg-gray-100 border-white shadow-[0_0_20px_rgba(255,255,255,0.8)]'
               }`}>
 
               <div className="space-y-2">
                 <h3 className="text-gray-400 uppercase tracking-widest text-sm font-bold">Your Role</h3>
                 <h1 className={`text-4xl font-black uppercase tracking-tight ${(currentPlayer.role === 'civilian' || currentPlayer.role === 'undercover') ? 'text-green-400 neon-text-green' :
-                    currentPlayer.role === 'inspector' ? 'text-blue-400 neon-text-blue' :
-                      currentPlayer.role === 'jester' ? 'text-pink-400 neon-text-pink' :
-                        'text-gray-900 glitch-anim'
+                  currentPlayer.role === 'inspector' ? 'text-blue-400 neon-text-blue' :
+                    currentPlayer.role === 'jester' ? 'text-pink-400 neon-text-pink' :
+                      'text-gray-900 glitch-anim'
                   }`}>
                   {(currentPlayer.role === 'civilian' || currentPlayer.role === 'undercover') ? 'Civilian' : currentPlayer.role === 'inspector' ? 'Inspector' : currentPlayer.role === 'jester' ? 'Jester' : 'Mr White'}
                 </h1>
@@ -1220,14 +1238,14 @@
         <div className="flex flex-col h-full p-6 justify-center items-center text-center space-y-8 absolute inset-0 bg-gray-950 z-50 animate-fade-in-up">
           <h3 className="text-gray-500 uppercase tracking-widest text-sm">{targetPlayer.name}'s Role is</h3>
           <div className={`p-8 rounded-3xl border-2 w-full max-w-xs ${targetPlayer.role === 'civilian' ? 'bg-green-900/20 border-green-500/50' :
-              targetPlayer.role === 'undercover' ? 'bg-yellow-900/20 border-yellow-500/50' :
-                targetPlayer.role === 'jester' ? 'bg-pink-900/20 border-pink-500/50' :
-                  'bg-gray-800 border-gray-400'
+            targetPlayer.role === 'undercover' ? 'bg-yellow-900/20 border-yellow-500/50' :
+              targetPlayer.role === 'jester' ? 'bg-pink-900/20 border-pink-500/50' :
+                'bg-gray-800 border-gray-400'
             }`}>
             <h1 className={`text-4xl font-black uppercase tracking-tight ${targetPlayer.role === 'civilian' ? 'text-green-400 neon-text-green' :
-                targetPlayer.role === 'undercover' ? 'text-yellow-400' :
-                  targetPlayer.role === 'jester' ? 'text-pink-400 neon-text-pink' :
-                    'text-white'
+              targetPlayer.role === 'undercover' ? 'text-yellow-400' :
+                targetPlayer.role === 'jester' ? 'text-pink-400 neon-text-pink' :
+                  'text-white'
               }`}>
               {targetPlayer.role === 'civilian' ? 'Civilian' : targetPlayer.role === 'undercover' ? 'Undercover' : targetPlayer.role === 'jester' ? 'Jester' : 'Mr White'}
             </h1>
@@ -1271,8 +1289,8 @@
                 key={p.id}
                 onClick={() => { sfx.playTap(); setSelectedPlayerId(p.id); }}
                 className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center space-x-4 ${selectedPlayerId === p.id
-                    ? 'bg-red-900/40 border-red-500 neon-border-red'
-                    : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
+                  ? 'bg-red-900/40 border-red-500 neon-border-red'
+                  : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
                   }`}
               >
                 <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl border border-gray-700">
@@ -1290,8 +1308,8 @@
             onClick={confirmVote}
             disabled={!selectedPlayerId}
             className={`flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-all ${selectedPlayerId
-                ? 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]'
-                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+              ? 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]'
+              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
               }`}
           >
             Eject Player
@@ -1355,17 +1373,17 @@
               </div>
 
               <div className={`p-8 rounded-3xl border-2 ${eliminated.role === 'civilian' ? 'bg-green-900/20 border-green-500/50' :
-                  eliminated.role === 'undercover' ? 'bg-yellow-900/20 border-yellow-500/50' :
-                    eliminated.role === 'inspector' ? 'bg-blue-900/20 border-blue-500/50' :
-                      eliminated.role === 'jester' ? 'bg-pink-900/20 border-pink-500/50' :
-                        'bg-gray-800 border-gray-400'
+                eliminated.role === 'undercover' ? 'bg-yellow-900/20 border-yellow-500/50' :
+                  eliminated.role === 'inspector' ? 'bg-blue-900/20 border-blue-500/50' :
+                    eliminated.role === 'jester' ? 'bg-pink-900/20 border-pink-500/50' :
+                      'bg-gray-800 border-gray-400'
                 }`}>
                 <p className="text-sm uppercase tracking-widest text-gray-400 mb-2">Their Role</p>
                 <h1 className={`text-4xl font-black uppercase tracking-tight ${eliminated.role === 'civilian' ? 'text-green-400' :
-                    eliminated.role === 'undercover' ? 'text-yellow-400' :
-                      eliminated.role === 'inspector' ? 'text-blue-400' :
-                        eliminated.role === 'jester' ? 'text-pink-400' :
-                          'text-white'
+                  eliminated.role === 'undercover' ? 'text-yellow-400' :
+                    eliminated.role === 'inspector' ? 'text-blue-400' :
+                      eliminated.role === 'jester' ? 'text-pink-400' :
+                        'text-white'
                   }`}>
                   {eliminated.role === 'civilian' ? 'Civilian' : eliminated.role === 'undercover' ? 'Undercover' : eliminated.role === 'inspector' ? 'Inspector' : eliminated.role === 'jester' ? 'Jester' : 'Mr White'}
                 </h1>
@@ -1444,9 +1462,9 @@
           <div className="flex-none space-y-2 mt-8">
             <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Game Over</h3>
             <h1 className={`text-4xl md:text-5xl font-black uppercase tracking-tight ${winners === 'civilian' ? 'text-green-400 neon-text-green' :
-                winners === 'mrwhite' ? 'text-white shadow-[0_0_20px_rgba(255,255,255,0.8)]' :
-                  winners === 'jester' ? 'text-pink-400 neon-text-pink' :
-                    'text-yellow-400 neon-border-yellow'
+              winners === 'mrwhite' ? 'text-white shadow-[0_0_20px_rgba(255,255,255,0.8)]' :
+                winners === 'jester' ? 'text-pink-400 neon-text-pink' :
+                  'text-yellow-400 neon-border-yellow'
               }`}>
               {winners === 'civilian' ? 'Civilians Win' : winners === 'mrwhite' ? 'Mr White Wins' : winners === 'jester' ? 'Jester Wins' : 'Undercovers Win'}
             </h1>
@@ -1477,10 +1495,10 @@
                   <div key={p.id} className="flex items-center space-x-2 text-sm bg-gray-950 p-2 rounded-lg">
                     <span className={p.isAlive ? 'text-white' : 'text-gray-600 line-through truncate max-w-[80px]'}>{p.name}</span>
                     <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${p.role === 'civilian' ? 'bg-green-900/50 text-green-400' :
-                        p.role === 'undercover' ? 'bg-yellow-900/50 text-yellow-400' :
-                          p.role === 'inspector' ? 'bg-blue-900/50 text-blue-400' :
-                            p.role === 'jester' ? 'bg-pink-900/50 text-pink-400' :
-                              'bg-gray-800 text-white'
+                      p.role === 'undercover' ? 'bg-yellow-900/50 text-yellow-400' :
+                        p.role === 'inspector' ? 'bg-blue-900/50 text-blue-400' :
+                          p.role === 'jester' ? 'bg-pink-900/50 text-pink-400' :
+                            'bg-gray-800 text-white'
                       }`}>
                       {p.role === 'civilian' ? 'CIV' : p.role === 'undercover' ? 'UND' : p.role === 'inspector' ? 'INS' : p.role === 'jester' ? 'JES' : 'MRW'}
                     </span>
