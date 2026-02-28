@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AIMS Board Game Club</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel for compiling React in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { background-color: #030712; color: white; user-select: none; touch-action: manipulation; }
+        .neon-text-green { text-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; }
+        .neon-text-red { text-shadow: 0 0 10px #ef4444, 0 0 20px #ef4444; }
+        .neon-text-cyan { text-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4; }
+        .neon-border-green { box-shadow: 0 0 10px #22c55e, inset 0 0 10px #22c55e; border-color: #22c55e; }
+        .neon-border-red { box-shadow: 0 0 10px #ef4444, inset 0 0 10px #ef4444; border-color: #ef4444; }
+        .neon-border-purple { box-shadow: 0 0 10px #a855f7, inset 0 0 10px #a855f7; border-color: #a855f7; }
+        .neon-border-cyan { box-shadow: 0 0 10px #06b6d4, inset 0 0 10px #06b6d4; border-color: #06b6d4; }
+        .neon-border-yellow { box-shadow: 0 0 10px #eab308, inset 0 0 10px #eab308; border-color: #eab308; }
+        .neon-text-blue { text-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6; }
+        .neon-border-blue { box-shadow: 0 0 10px #3b82f6, inset 0 0 10px #3b82f6; border-color: #3b82f6; }
+        .neon-text-pink { text-shadow: 0 0 10px #ec4899, 0 0 20px #ec4899; }
+        .neon-border-pink { box-shadow: 0 0 10px #ec4899, inset 0 0 10px #ec4899; border-color: #ec4899; }
+        .glitch-anim { animation: glitch 0.3s linear infinite; }
+        @keyframes glitch {
+          0% { transform: translate(0) }
+          20% { transform: translate(-2px, 2px) }
+          40% { transform: translate(-2px, -2px) }
+          60% { transform: translate(2px, 2px) }
+          80% { transform: translate(2px, -2px) }
+          100% { transform: translate(0) }
+        }
+        .progress-fill { transition: width 0.3s ease; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #374151; border-radius: 20px; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.4s ease forwards; }
+    </style>
+</head>
+<body class="h-[100dvh] w-full font-sans overflow-hidden flex flex-col items-center bg-gray-950 text-white">
+    
+    <div id="root" class="w-full h-full flex flex-col items-center max-w-md relative overflow-hidden"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+              // --- GAME DATA ---
+const WORD_PAIRS = [
+  // Animals
+  { c: "Dog", u: "Wolf", diff: "medium" },
+  { c: "Cat", u: "Tiger", diff: "medium" },
+  { c: "Mouse", u: "Rat", diff: "hard" },
+  { c: "Frog", u: "Toad", diff: "hard" },
+  { c: "Crocodile", u: "Alligator", diff: "hard" },
+  { c: "Butterfly", u: "Moth", diff: "hard" },
+  { c: "Bee", u: "Wasp", diff: "medium" },
+  { c: "Turtle", u: "Tortoise", diff: "hard" },
+  { c: "Rabbit", u: "Hare", diff: "hard" },
+  { c: "Dolphin", u: "Whale", diff: "easy" },
+  { c: "Crow", u: "Raven", diff: "hard" },
+  { c: "Pigeon", u: "Dove", diff: "medium" },
+  { c: "Eagle", u: "Hawk", diff: "medium" },
+  { c: "Monkey", u: "Ape", diff: "hard" },
+  { c: "Gorilla", u: "Chimpanzee", diff: "medium" },
+  { c: "Bear", u: "Panda", diff: "easy" },
+  { c: "Lion", u: "Leopard", diff: "medium" },
+  { c: "Tiger", u: "Cheetah", diff: "medium" },
+  { c: "Deer", u: "Elk", diff: "medium" },
+  { c: "Sheep", u: "Goat", diff: "medium" },
+  { c: "Cow", u: "Bull", diff: "easy" },
+  { c: "Pig", u: "Boar", diff: "medium" },
+  { c: "Chicken", u: "Turkey", diff: "easy" },
+  { c: "Duck", u: "Goose", diff: "medium" },
+  { c: "Horse", u: "Donkey", diff: "easy" },
+  { c: "Snake", u: "Lizard", diff: "easy" },
+  { c: "Shark", u: "Dolphin", diff: "easy" },
+  { c: "Penguin", u: "Puffin", diff: "medium" },
+  { c: "Ant", u: "Termite", diff: "hard" },
+  { c: "Spider", u: "Scorpion", diff: "medium" },
+  { c: "Fly", u: "Mosquito", diff: "medium" },
+  { c: "Snail", u: "Slug", diff: "medium" },
+  { c: "Worm", u: "Caterpillar", diff: "medium" },
+  { c: "Crab", u: "Lobster", diff: "medium" },
+  { c: "Octopus", u: "Squid", diff: "hard" },
+  { c: "Seal", u: "Walrus", diff: "medium" },
+  { c: "Moose", u: "Reindeer", diff: "hard" },
+  { c: "Alpaca", u: "Llama", diff: "hard" },
+  { c: "Camel", u: "Dromedary", diff: "hard" },
+  { c: "Bison", u: "Buffalo", diff: "hard" },
+  { c: "Panther", u: "Jaguar", diff: "hard" },
+  { c: "Fox", u: "Coyote", diff: "medium" },
+  { c: "Owl", u: "Bat", diff: "easy" },
+  { c: "Seagull", u: "Pelican", diff: "medium" },
+  { c: "Swan", u: "Flamingo", diff: "easy" },
+  { c: "Hippo", u: "Rhino", diff: "easy" },
+  { c: "Zebra", u: "Giraffe", diff: "easy" },
+  { c: "Kangaroo", u: "Koala", diff: "easy" },
+  { c: "Ostrich", u: "Emu", diff: "hard" },
+  { c: "Woodpecker", u: "Parrot", diff: "medium" },
+
+  // Food & Drink
+  { c: "Apple", u: "Orange", diff: "easy" },
+  { c: "Banana", u: "Plantain", diff: "hard" },
+  { c: "Lemon", u: "Lime", diff: "hard" },
+  { c: "Peach", u: "Plum", diff: "medium" },
+  { c: "Strawberry", u: "Raspberry", diff: "medium" },
+  { c: "Blueberry", u: "Blackberry", diff: "medium" },
+  { c: "Grape", u: "Cherry", diff: "easy" },
+  { c: "Melon", u: "Watermelon", diff: "easy" },
+  { c: "Tomato", u: "Potato", diff: "easy" },
+  { c: "Carrot", u: "Parsnip", diff: "hard" },
+  { c: "Onion", u: "Garlic", diff: "medium" },
+  { c: "Broccoli", u: "Cauliflower", diff: "medium" },
+  { c: "Cabbage", u: "Lettuce", diff: "medium" },
+  { c: "Spinach", u: "Kale", diff: "hard" },
+  { c: "Cucumber", u: "Zucchini", diff: "hard" },
+  { c: "Pepper", u: "Chili", diff: "medium" },
+  { c: "Bean", u: "Pea", diff: "medium" },
+  { c: "Rice", u: "Pasta", diff: "easy" },
+  { c: "Bread", u: "Toast", diff: "easy" },
+  { c: "Cake", u: "Pie", diff: "easy" },
+  { c: "Cookie", u: "Biscuit", diff: "medium" },
+  { c: "Muffin", u: "Cupcake", diff: "medium" },
+  { c: "Pancake", u: "Waffle", diff: "medium" },
+  { c: "Ice Cream", u: "Gelato", diff: "hard" },
+  { c: "Milk", u: "Yogurt", diff: "easy" },
+  { c: "Cheese", u: "Butter", diff: "medium" },
+  { c: "Water", u: "Juice", diff: "easy" },
+  { c: "Coffee", u: "Tea", diff: "easy" },
+  { c: "Beer", u: "Wine", diff: "easy" },
+  { c: "Soda", u: "Juice", diff: "easy" },
+  { c: "Soup", u: "Stew", diff: "medium" },
+  { c: "Burger", u: "Sandwich", diff: "easy" },
+  { c: "Pizza", u: "Pasta", diff: "easy" },
+  { c: "Steak", u: "Pork", diff: "medium" },
+  { c: "Chicken", u: "Fish", diff: "easy" },
+  { c: "Salt", u: "Pepper", diff: "easy" },
+  { c: "Sugar", u: "Honey", diff: "easy" },
+  { c: "Mustard", u: "Ketchup", diff: "easy" },
+  { c: "Mayo", u: "Butter", diff: "medium" },
+  { c: "Chocolate", u: "Vanilla", diff: "easy" },
+  { c: "Croissant", u: "Bagel", diff: "medium" },
+  { c: "Sausage", u: "Bacon", diff: "medium" },
+  { c: "Omelet", u: "Scrambled Eggs", diff: "hard" },
+  { c: "Sushi", u: "Sashimi", diff: "hard" },
+  { c: "Taco", u: "Burrito", diff: "medium" },
+  { c: "Peanut", u: "Almond", diff: "medium" },
+  { c: "Walnut", u: "Pecan", diff: "hard" },
+  { c: "Jam", u: "Jelly", diff: "hard" },
+  { c: "Syrup", u: "Honey", diff: "medium" },
+  { c: "Vinegar", u: "Oil", diff: "medium" },
+
+  // Nature & Geography
+  { c: "Sun", u: "Moon", diff: "easy" },
+  { c: "Star", u: "Planet", diff: "medium" },
+  { c: "Earth", u: "Mars", diff: "medium" },
+  { c: "Mountain", u: "Hill", diff: "easy" },
+  { c: "Valley", u: "Canyon", diff: "medium" },
+  { c: "River", u: "Stream", diff: "medium" },
+  { c: "Ocean", u: "Sea", diff: "easy" },
+  { c: "Lake", u: "Pond", diff: "medium" },
+  { c: "Forest", u: "Jungle", diff: "medium" },
+  { c: "Desert", u: "Tundra", diff: "medium" },
+  { c: "Island", u: "Peninsula", diff: "hard" },
+  { c: "Continent", u: "Country", diff: "medium" },
+  { c: "City", u: "Town", diff: "easy" },
+  { c: "Village", u: "City", diff: "easy" },
+  { c: "Street", u: "Avenue", diff: "hard" },
+  { c: "Road", u: "Highway", diff: "medium" },
+  { c: "Bridge", u: "Tunnel", diff: "medium" },
+  { c: "Cloud", u: "Fog", diff: "medium" },
+  { c: "Rain", u: "Snow", diff: "easy" },
+  { c: "Storm", u: "Hurricane", diff: "medium" },
+  { c: "Tornado", u: "Cyclone", diff: "hard" },
+  { c: "Ice", u: "Snow", diff: "easy" },
+  { c: "Fire", u: "Smoke", diff: "easy" },
+  { c: "Volcano", u: "Earthquake", diff: "medium" },
+  { c: "Tree", u: "Bush", diff: "easy" },
+  { c: "Flower", u: "Weed", diff: "medium" },
+  { c: "Grass", u: "Moss", diff: "medium" },
+  { c: "Leaf", u: "Branch", diff: "easy" },
+  { c: "Root", u: "Stem", diff: "medium" },
+  { c: "Rock", u: "Stone", diff: "hard" },
+  { c: "Sand", u: "Dust", diff: "medium" },
+  { c: "Dirt", u: "Mud", diff: "easy" },
+  { c: "Gold", u: "Silver", diff: "easy" },
+  { c: "Iron", u: "Steel", diff: "medium" },
+  { c: "Copper", u: "Bronze", diff: "hard" },
+  { c: "Diamond", u: "Ruby", diff: "medium" },
+  { c: "Cave", u: "Cavern", diff: "hard" },
+  { c: "Waterfall", u: "River", diff: "medium" },
+  { c: "Glacier", u: "Iceberg", diff: "medium" },
+  { c: "Meteor", u: "Asteroid", diff: "hard" },
+  { c: "Galaxy", u: "Universe", diff: "medium" },
+  { c: "Sunrise", u: "Sunset", diff: "easy" },
+  { c: "Spring", u: "Autumn", diff: "easy" },
+  { c: "Summer", u: "Winter", diff: "easy" },
+  { c: "Morning", u: "Evening", diff: "easy" },
+  { c: "Day", u: "Night", diff: "easy" },
+  { c: "Breeze", u: "Wind", diff: "hard" },
+  { c: "Hurricane", u: "Typhoon", diff: "hard" },
+  { c: "Swamp", u: "Marsh", diff: "hard" },
+  { c: "Woods", u: "Forest", diff: "hard" },
+
+  // Household & Everyday Objects
+  { c: "Chair", u: "Stool", diff: "medium" },
+  { c: "Sofa", u: "Couch", diff: "hard" },
+  { c: "Bed", u: "Cot", diff: "medium" },
+  { c: "Table", u: "Desk", diff: "medium" },
+  { c: "Wardrobe", u: "Closet", diff: "hard" },
+  { c: "Lamp", u: "Lantern", diff: "medium" },
+  { c: "Window", u: "Door", diff: "easy" },
+  { c: "Wall", u: "Ceiling", diff: "easy" },
+  { c: "Floor", u: "Roof", diff: "easy" },
+  { c: "House", u: "Apartment", diff: "easy" },
+  { c: "Room", u: "Hallway", diff: "medium" },
+  { c: "Kitchen", u: "Bathroom", diff: "easy" },
+  { c: "Plate", u: "Bowl", diff: "easy" },
+  { c: "Cup", u: "Glass", diff: "medium" },
+  { c: "Fork", u: "Spoon", diff: "easy" },
+  { c: "Knife", u: "Sword", diff: "medium" },
+  { c: "Pot", u: "Pan", diff: "hard" },
+  { c: "Oven", u: "Stove", diff: "hard" },
+  { c: "Fridge", u: "Freezer", diff: "medium" },
+  { c: "Washer", u: "Dryer", diff: "medium" },
+  { c: "Broom", u: "Mop", diff: "medium" },
+  { c: "Vacuum", u: "Broom", diff: "easy" },
+  { c: "Towel", u: "Blanket", diff: "medium" },
+  { c: "Pillow", u: "Cushion", diff: "medium" },
+  { c: "Soap", u: "Shampoo", diff: "easy" },
+  { c: "Toothbrush", u: "Toothpaste", diff: "easy" },
+  { c: "Mirror", u: "Glass", diff: "medium" },
+  { c: "Clock", u: "Watch", diff: "easy" },
+  { c: "Pen", u: "Pencil", diff: "easy" },
+  { c: "Paper", u: "Notebook", diff: "easy" },
+  { c: "Book", u: "Magazine", diff: "easy" },
+  { c: "Newspaper", u: "Journal", diff: "medium" },
+  { c: "Bag", u: "Backpack", diff: "easy" },
+  { c: "Purse", u: "Wallet", diff: "medium" },
+  { c: "Key", u: "Lock", diff: "easy" },
+  { c: "Box", u: "Crate", diff: "medium" },
+  { c: "Bottle", u: "Can", diff: "medium" },
+  { c: "Jar", u: "Jug", diff: "medium" },
+  { c: "Match", u: "Lighter", diff: "medium" },
+  { c: "Candle", u: "Torch", diff: "medium" },
+  { c: "Blanket", u: "Quilt", diff: "hard" },
+  { c: "Carpet", u: "Rug", diff: "hard" },
+  { c: "Curtain", u: "Blind", diff: "medium" },
+  { c: "Sponge", u: "Cloth", diff: "medium" },
+  { c: "Tissue", u: "Napkin", diff: "medium" },
+  { c: "Tray", u: "Plate", diff: "medium" },
+  { c: "Bowl", u: "Basin", diff: "medium" },
+  { c: "Umbrella", u: "Raincoat", diff: "medium" },
+  { c: "Fan", u: "Air Conditioner", diff: "medium" },
+  { c: "Heater", u: "Radiator", diff: "medium" },
+
+  // Body & Clothing
+  { c: "Shirt", u: "T-shirt", diff: "medium" },
+  { c: "Pants", u: "Jeans", diff: "medium" },
+  { c: "Shorts", u: "Pants", diff: "easy" },
+  { c: "Dress", u: "Skirt", diff: "easy" },
+  { c: "Suit", u: "Tuxedo", diff: "medium" },
+  { c: "Coat", u: "Jacket", diff: "medium" },
+  { c: "Sweater", u: "Hoodie", diff: "medium" },
+  { c: "Hat", u: "Cap", diff: "medium" },
+  { c: "Glove", u: "Mitten", diff: "hard" },
+  { c: "Sock", u: "Shoe", diff: "easy" },
+  { c: "Boot", u: "Shoe", diff: "easy" },
+  { c: "Sandal", u: "Slipper", diff: "medium" },
+  { c: "Scarf", u: "Tie", diff: "medium" },
+  { c: "Belt", u: "Suspenders", diff: "medium" },
+  { c: "Ring", u: "Bracelet", diff: "easy" },
+  { c: "Necklace", u: "Pendant", diff: "hard" },
+  { c: "Glasses", u: "Goggles", diff: "medium" },
+  { c: "Eye", u: "Ear", diff: "easy" },
+  { c: "Nose", u: "Mouth", diff: "easy" },
+  { c: "Hand", u: "Foot", diff: "easy" },
+  { c: "Arm", u: "Leg", diff: "easy" },
+  { c: "Finger", u: "Toe", diff: "easy" },
+  { c: "Hair", u: "Beard", diff: "easy" },
+  { c: "Heart", u: "Brain", diff: "medium" },
+  { c: "Blood", u: "Bone", diff: "medium" },
+  { c: "Muscle", u: "Skin", diff: "medium" },
+  { c: "Vein", u: "Artery", diff: "hard" },
+  { c: "Stomach", u: "Intestine", diff: "medium" },
+  { c: "Lung", u: "Liver", diff: "medium" },
+  { c: "Tooth", u: "Tongue", diff: "easy" },
+  { c: "Nail", u: "Claw", diff: "medium" },
+  { c: "Lip", u: "Cheek", diff: "medium" },
+  { c: "Neck", u: "Throat", diff: "medium" },
+  { c: "Shoulder", u: "Back", diff: "easy" },
+  { c: "Knee", u: "Elbow", diff: "medium" },
+  { c: "Ankle", u: "Wrist", diff: "medium" },
+  { c: "Spine", u: "Rib", diff: "medium" },
+  { c: "Skull", u: "Skeleton", diff: "medium" },
+  { c: "Tear", u: "Sweat", diff: "medium" },
+  { c: "Smile", u: "Grin", diff: "hard" },
+  { c: "Laugh", u: "Chuckle", diff: "hard" },
+  { c: "Cry", u: "Sob", diff: "hard" },
+  { c: "Whisper", u: "Mumble", diff: "hard" },
+  { c: "Yell", u: "Shout", diff: "hard" },
+  { c: "Boot", u: "Sneaker", diff: "medium" },
+  { c: "Heels", u: "Flats", diff: "medium" },
+  { c: "Swimsuit", u: "Bikini", diff: "medium" },
+  { c: "Pajamas", u: "Robe", diff: "medium" },
+  { c: "Uniform", u: "Costume", diff: "medium" },
+  { c: "Helmet", u: "Hat", diff: "easy" },
+
+  // Tech, Tools & Vehicles
+  { c: "Phone", u: "Tablet", diff: "medium" },
+  { c: "Computer", u: "Laptop", diff: "medium" },
+  { c: "Keyboard", u: "Mouse", diff: "easy" },
+  { c: "Screen", u: "Monitor", diff: "hard" },
+  { c: "TV", u: "Radio", diff: "easy" },
+  { c: "Camera", u: "Lens", diff: "medium" },
+  { c: "Headphones", u: "Speakers", diff: "medium" },
+  { c: "Microphone", u: "Megaphone", diff: "medium" },
+  { c: "Battery", u: "Charger", diff: "medium" },
+  { c: "Wire", u: "Cable", diff: "hard" },
+  { c: "Hammer", u: "Mallet", diff: "hard" },
+  { c: "Screwdriver", u: "Wrench", diff: "medium" },
+  { c: "Drill", u: "Saw", diff: "medium" },
+  { c: "Nail", u: "Screw", diff: "hard" },
+  { c: "Nut", u: "Bolt", diff: "hard" },
+  { c: "Glue", u: "Tape", diff: "easy" },
+  { c: "Scissors", u: "Knife", diff: "easy" },
+  { c: "Ruler", u: "Tape Measure", diff: "medium" },
+  { c: "Brush", u: "Comb", diff: "medium" },
+  { c: "Paint", u: "Ink", diff: "medium" },
+  { c: "Car", u: "Truck", diff: "easy" },
+  { c: "Bus", u: "Train", diff: "easy" },
+  { c: "Subway", u: "Tram", diff: "hard" },
+  { c: "Bicycle", u: "Motorcycle", diff: "easy" },
+  { c: "Boat", u: "Ship", diff: "medium" },
+  { c: "Canoe", u: "Kayak", diff: "hard" },
+  { c: "Airplane", u: "Helicopter", diff: "easy" },
+  { c: "Rocket", u: "Missile", diff: "medium" },
+  { c: "Skateboard", u: "Rollerblades", diff: "medium" },
+  { c: "Scooter", u: "Bike", diff: "medium" },
+  { c: "Engine", u: "Motor", diff: "hard" },
+  { c: "Wheel", u: "Tire", diff: "hard" },
+  { c: "Gear", u: "Cog", diff: "hard" },
+  { c: "Brake", u: "Accelerator", diff: "medium" },
+  { c: "Keyboard", u: "Piano", diff: "medium" },
+  { c: "Controller", u: "Joystick", diff: "medium" },
+  { c: "Printer", u: "Scanner", diff: "medium" },
+  { c: "Router", u: "Modem", diff: "hard" },
+  { c: "App", u: "Website", diff: "medium" },
+  { c: "Password", u: "PIN", diff: "medium" },
+  { c: "Sword", u: "Dagger", diff: "medium" },
+  { c: "Bow", u: "Crossbow", diff: "medium" },
+  { c: "Arrow", u: "Dart", diff: "medium" },
+  { c: "Shield", u: "Armor", diff: "medium" },
+  { c: "Axe", u: "Hatchet", diff: "hard" },
+  { c: "Spear", u: "Lance", diff: "hard" },
+  { c: "Pistol", u: "Rifle", diff: "medium" },
+  { c: "Bullet", u: "Shell", diff: "medium" },
+  { c: "Tractor", u: "Bulldozer", diff: "medium" },
+  { c: "Submarine", u: "Boat", diff: "medium" },
+
+  // Professions, People & Places
+  { c: "Doctor", u: "Nurse", diff: "easy" },
+  { c: "Teacher", u: "Professor", diff: "medium" },
+  { c: "Student", u: "Pupil", diff: "hard" },
+  { c: "Police", u: "Soldier", diff: "medium" },
+  { c: "Firefighter", u: "Cop", diff: "easy" },
+  { c: "Judge", u: "Lawyer", diff: "medium" },
+  { c: "King", u: "Queen", diff: "easy" },
+  { c: "Prince", u: "Princess", diff: "easy" },
+  { c: "Mayor", u: "President", diff: "medium" },
+  { c: "Boss", u: "Manager", diff: "hard" },
+  { c: "Worker", u: "Employee", diff: "hard" },
+  { c: "Actor", u: "Singer", diff: "easy" },
+  { c: "Artist", u: "Painter", diff: "medium" },
+  { c: "Writer", u: "Poet", diff: "medium" },
+  { c: "Chef", u: "Cook", diff: "hard" },
+  { c: "Baker", u: "Butcher", diff: "medium" },
+  { c: "Farmer", u: "Gardener", diff: "medium" },
+  { c: "Pilot", u: "Driver", diff: "medium" },
+  { c: "Sailor", u: "Captain", diff: "medium" },
+  { c: "Astronaut", u: "Pilot", diff: "medium" },
+  { c: "Scientist", u: "Engineer", diff: "medium" },
+  { c: "Friend", u: "Enemy", diff: "easy" },
+  { c: "Brother", u: "Sister", diff: "easy" },
+  { c: "Father", u: "Mother", diff: "easy" },
+  { c: "Son", u: "Daughter", diff: "easy" },
+  { c: "Uncle", u: "Aunt", diff: "easy" },
+  { c: "Cousin", u: "Nephew", diff: "medium" },
+  { c: "Baby", u: "Child", diff: "medium" },
+  { c: "Boy", u: "Girl", diff: "easy" },
+  { c: "Man", u: "Woman", diff: "easy" },
+  { c: "Hospital", u: "Clinic", diff: "medium" },
+  { c: "School", u: "College", diff: "medium" },
+  { c: "University", u: "School", diff: "easy" },
+  { c: "Library", u: "Bookstore", diff: "medium" },
+  { c: "Museum", u: "Gallery", diff: "hard" },
+  { c: "Theater", u: "Cinema", diff: "hard" },
+  { c: "Stadium", u: "Arena", diff: "hard" },
+  { c: "Park", u: "Garden", diff: "medium" },
+  { c: "Zoo", u: "Aquarium", diff: "medium" },
+  { c: "Bank", u: "Treasury", diff: "medium" },
+  { c: "Market", u: "Supermarket", diff: "medium" },
+  { c: "Shop", u: "Store", diff: "hard" },
+  { c: "Mall", u: "Market", diff: "medium" },
+  { c: "Restaurant", u: "Cafe", diff: "medium" },
+  { c: "Bar", u: "Pub", diff: "hard" },
+  { c: "Hotel", u: "Motel", diff: "hard" },
+  { c: "Airport", u: "Station", diff: "medium" },
+  { c: "Port", u: "Harbor", diff: "hard" },
+  { c: "Church", u: "Temple", diff: "medium" },
+  { c: "Mosque", u: "Shrine", diff: "medium" },
+
+  // Abstract Concepts, Feelings & Actions
+  { c: "Time", u: "Eternity", diff: "hard" },
+  { c: "Past", u: "Future", diff: "easy" },
+  { c: "History", u: "Myth", diff: "hard" },
+  { c: "Legend", u: "Fable", diff: "hard" },
+  { c: "Truth", u: "Lie", diff: "easy" },
+  { c: "Fact", u: "Opinion", diff: "medium" },
+  { c: "Knowledge", u: "Wisdom", diff: "hard" },
+  { c: "Idea", u: "Thought", diff: "hard" },
+  { c: "Dream", u: "Goal", diff: "medium" },
+  { c: "Hope", u: "Wish", diff: "hard" },
+  { c: "Love", u: "Hate", diff: "easy" },
+  { c: "Joy", u: "Happiness", diff: "hard" },
+  { c: "Sadness", u: "Grief", diff: "hard" },
+  { c: "Anger", u: "Rage", diff: "hard" },
+  { c: "Fear", u: "Terror", diff: "hard" },
+  { c: "Courage", u: "Bravery", diff: "hard" },
+  { c: "Pride", u: "Vanity", diff: "hard" },
+  { c: "Envy", u: "Jealousy", diff: "hard" },
+  { c: "Greed", u: "Lust", diff: "hard" },
+  { c: "Honor", u: "Glory", diff: "medium" },
+  { c: "Power", u: "Strength", diff: "hard" },
+  { c: "Speed", u: "Agility", diff: "hard" },
+  { c: "Luck", u: "Fate", diff: "hard" },
+  { c: "Chance", u: "Destiny", diff: "hard" },
+  { c: "Magic", u: "Sorcery", diff: "hard" },
+  { c: "Science", u: "Religion", diff: "medium" },
+  { c: "Faith", u: "Belief", diff: "hard" },
+  { c: "Soul", u: "Spirit", diff: "hard" },
+  { c: "Mind", u: "Brain", diff: "medium" },
+  { c: "Life", u: "Death", diff: "easy" },
+  { c: "Peace", u: "War", diff: "easy" },
+  { c: "Victory", u: "Defeat", diff: "easy" },
+  { c: "Success", u: "Failure", diff: "easy" },
+  { c: "Begin", u: "End", diff: "easy" },
+  { c: "Start", u: "Stop", diff: "easy" },
+  { c: "Up", u: "Down", diff: "easy" },
+  { c: "Left", u: "Right", diff: "easy" },
+  { c: "High", u: "Low", diff: "easy" },
+  { c: "Hot", u: "Cold", diff: "easy" },
+  { c: "Fast", u: "Slow", diff: "easy" },
+  { c: "Good", u: "Bad", diff: "easy" },
+  { c: "Light", u: "Dark", diff: "easy" },
+  { c: "Heaven", u: "Paradise", diff: "hard" },
+  { c: "Hell", u: "Underworld", diff: "hard" },
+  { c: "Angel", u: "Demon", diff: "medium" },
+  { c: "Ghost", u: "Zombie", diff: "medium" },
+  { c: "Vampire", u: "Werewolf", diff: "medium" },
+  { c: "Magic", u: "Illusion", diff: "medium" },
+  { c: "Sarcasm", u: "Irony", diff: "hard" },
+  { c: "Empathy", u: "Sympathy", diff: "hard" },
+  { c: "Liberty", u: "Freedom", diff: "hard" },
+  { c: "Justice", u: "Fairness", diff: "hard" },
+  { c: "Morality", u: "Ethics", diff: "hard" },
+  { c: "Guarantee", u: "Warranty", diff: "hard" },
+  { c: "Strategy", u: "Tactics", diff: "hard" },
+  { c: "Disease", u: "Syndrome", diff: "hard" },
+  { c: "Poison", u: "Venom", diff: "hard" },
+  { c: "Ignorance", u: "Stupidity", diff: "hard" },
+  { c: "Arrogance", u: "Confidence", diff: "hard" },
+  { c: "Murder", u: "Assassination", diff: "hard" },
+  { c: "Robbery", u: "Burglary", diff: "hard" },
+  { c: "Prison", u: "Jail", diff: "hard" },
+  { c: "Revenge", u: "Vengeance", diff: "hard" },
+  { c: "Cemetery", u: "Graveyard", diff: "hard" },
+  { c: "Religion", u: "Cult", diff: "hard" },
+  { c: "Omen", u: "Sign", diff: "hard" }
+];
+
+
+        const ADJECTIVES = ["Neon", "Cyber", "Fast", "Shadow", "Quantum", "Toxic", "Ghost", "Void", "Cosmic", "Glitch"];
+        const NOUNS = ["Ninja", "Potato", "Viper", "Specter", "Cyborg", "Hacker", "Rebel", "Pirate", "Nomad", "Pixel"];
+
+        const CHAOS_MODIFIERS = [
+          { id: 'silent', name: "Silenced", desc: "One random player cannot speak this round!", icon: "fa-comment-slash" },
+          { id: 'speed', name: "Sudden Death", desc: "Discussion time is cut in half!", icon: "fa-clock" },
+          { id: 'double', name: "Double Trouble", desc: "The eliminated player takes someone down with them!", icon: "fa-skull" },
+          { id: 'blind', name: "Blind Vote", desc: "Close your eyes and vote on the count of 3.", icon: "fa-eye-slash" },
+          { id: 'exposure', name: "Data Leak", desc: "The system will give one (possibly fake) clue.", icon: "fa-bolt" }
+        ];
+
+        // --- AUDIO ENGINE ---
+        class SoundEngine {
+          constructor() {
+            this.ctx = null;
+            this.enabled = true;
+          }
+          init() {
+            if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          playTone(freq, type, duration, vol = 0.1) {
+            if (!this.enabled) return;
+            this.init();
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+          }
+          playTap() { this.playTone(600, 'sine', 0.1, 0.05); }
+          playReveal() { 
+            this.playTone(300, 'square', 0.1, 0.1); 
+            setTimeout(() => this.playTone(400, 'square', 0.2, 0.1), 100);
+          }
+          playDramatic() { this.playTone(100, 'sawtooth', 1.5, 0.2); }
+          playWin() {
+            [400, 500, 600, 800].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.2, 0.1), i * 150));
+          }
+          playEliminate() { this.playTone(150, 'sawtooth', 0.5, 0.3); }
+          toggle() { this.enabled = !this.enabled; return this.enabled; }
+        }
+
+        const sfx = new SoundEngine();
+
+        // --- MAIN COMPONENT ---
+        function App() {
+          const [profile, setProfile] = useState(() => {
+            const saved = localStorage.getItem('aimsBoardGameProfile');
+            return saved ? JSON.parse(saved) : { xp: 0, level: 1, gamesPlayed: 0, wins: 0, achievements: [] };
+          });
+
+          const [view, setView] = useState('home');
+          const [players, setPlayers] = useState([
+            { id: 1, name: "Player 1", avatar: 1 }, 
+            { id: 2, name: "Player 2", avatar: 2 }, 
+            { id: 3, name: "Player 3", avatar: 3 }
+          ]);
+          const [settings, setSettings] = useState({ undercoverCount: 1, mrWhiteCount: 0, inspector: false, jester: false, chaosMode: false, difficulty: 'medium' });
+          const [soundEnabled, setSoundEnabled] = useState(true);
+          const [gameState, setGameState] = useState(null);
+
+          useEffect(() => {
+            localStorage.setItem('aimsBoardGameProfile', JSON.stringify(profile));
+          }, [profile]);
+
+          const getRandomName = () => `${ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]} ${NOUNS[Math.floor(Math.random() * NOUNS.length)]}`;
+
+          const startGameSetup = () => { sfx.init(); sfx.playTap(); setView('lobby'); };
+          
+          const initGame = () => {
+            sfx.playTap();
+            const availableWords = WORD_PAIRS.filter(w => settings.difficulty === 'all' || w.diff === settings.difficulty);
+            const wordPair = availableWords[Math.floor(Math.random() * availableWords.length)] || WORD_PAIRS[0];
+
+            let roles = Array(settings.undercoverCount).fill('undercover')
+              .concat(Array(settings.mrWhiteCount).fill('mrwhite'));
+              
+            if (settings.inspector) roles.push('inspector');
+            if (settings.jester) roles.push('jester');
+              
+            if (roles.length > players.length) {
+              roles = roles.slice(0, players.length);
+            } else {
+              roles = roles.concat(Array(players.length - roles.length).fill('civilian'));
+            }
+            
+            roles = roles.sort(() => Math.random() - 0.5);
+
+            const activePlayers = players.map((p, i) => ({
+              ...p,
+              role: roles[i],
+              word: (roles[i] === 'civilian' || roles[i] === 'inspector' || roles[i] === 'jester') ? wordPair.c : (roles[i] === 'undercover' ? wordPair.u : null),
+              isAlive: true,
+              votes: 0
+            }));
+
+            setGameState({
+              players: activePlayers,
+              wordPair,
+              currentPlayerRevealIndex: 0,
+              round: 1,
+              chaosActive: null,
+              inspectorUsed: false,
+              phase: 'reveal',
+              turnStart: Date.now(),
+              history: []
+            });
+            setView('reveal');
+          };
+
+          const addXP = (amount) => {
+            setProfile(p => {
+              const newXP = p.xp + amount;
+              const newLevel = Math.floor(newXP / 500) + 1;
+              return { ...p, xp: newXP, level: newLevel };
+            });
+          };
+
+          return (
+            <div className="w-full h-full flex flex-col overflow-hidden">
+              {/* Header Bar */}
+              <div className="flex-none w-full p-4 flex justify-between items-center border-b border-gray-800 bg-gray-900/50 backdrop-blur-md z-10 relative">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center font-bold border border-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.5)]">
+                    L{profile.level}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-400 font-bold tracking-widest uppercase">Rank</span>
+                    <div className="w-24 h-2 bg-gray-800 rounded-full overflow-hidden mt-1">
+                      <div className="h-full bg-cyan-400 progress-fill" style={{ width: `${(profile.xp % 500) / 500 * 100}%` }} />
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => { sfx.init(); sfx.toggle(); setSoundEnabled(sfx.enabled); }} className="text-gray-400 hover:text-white transition-colors text-xl">
+                  {soundEnabled ? <i className="fa-solid fa-volume-high"></i> : <i className="fa-solid fa-volume-xmark"></i>}
+                </button>
+              </div>
+
+              {/* Main Views */}
+              <div className="flex-1 w-full relative flex flex-col overflow-hidden min-h-0">
+                {view === 'home' && <HomeView onPlay={startGameSetup} profile={profile} />}
+                {view === 'lobby' && <LobbyView players={players} setPlayers={setPlayers} onNext={() => { sfx.playTap(); setView('setup'); }} getRandomName={getRandomName} />}
+                {view === 'setup' && <SetupView players={players} settings={settings} setSettings={setSettings} onStart={initGame} onBack={() => setView('lobby')} />}
+                {view === 'reveal' && <RevealView gameState={gameState} setGameState={setGameState} setView={setView} />}
+                {view === 'inspector' && <InspectorView gameState={gameState} setGameState={setGameState} setView={setView} />}
+                {view === 'discussion' && <DiscussionView gameState={gameState} setGameState={setGameState} setView={setView} settings={settings} />}
+                {view === 'voting' && <VotingView gameState={gameState} setGameState={setGameState} setView={setView} />}
+                {view === 'eliminate' && <EliminateView gameState={gameState} setGameState={setGameState} setView={setView} addXP={addXP} />}
+                {view === 'end' && <EndScreenView gameState={gameState} profile={profile} onRematch={() => { sfx.playTap(); setView('setup'); }} addXP={addXP} />}
+              </div>
+            </div>
+          );
+        }
+
+        // --- GAME VIEWS ---
+
+        function HomeView({ onPlay, profile }) {
+          return (
+            <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-12 overflow-y-auto">
+              <div className="flex-none text-center space-y-2">
+                <h1 className="text-5xl font-black italic tracking-tighter neon-text-cyan flex flex-col">
+                  <span>AIMS BOARD</span>
+                  <span className="text-white neon-text-red">GAME CLUB</span>
+                </h1>
+                <p className="text-gray-400 text-sm tracking-widest uppercase mt-4">Trust no one. Survive.</p>
+              </div>
+
+              <button 
+                onClick={onPlay}
+                className="flex-none group relative px-10 py-4 bg-transparent font-bold text-lg rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 opacity-80 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-1 bg-gray-950 rounded-full" />
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 opacity-20 blur-xl group-hover:opacity-40 transition-opacity" />
+                <span className="relative flex items-center justify-center space-x-3 text-cyan-400 group-hover:text-white transition-colors">
+                  <i className="fa-solid fa-play"></i>
+                  <span>START MATCH</span>
+                </span>
+              </button>
+
+              <div className="flex-none grid grid-cols-2 gap-4 w-full mt-8">
+                <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-2xl flex flex-col items-center justify-center">
+                  <i className="fa-solid fa-trophy text-yellow-500 mb-2 text-2xl"></i>
+                  <span className="text-2xl font-bold">{profile.wins}</span>
+                  <span className="text-xs text-gray-500 uppercase">Victories</span>
+                </div>
+                <div className="bg-gray-900/50 border border-gray-800 p-4 rounded-2xl flex flex-col items-center justify-center">
+                  <i className="fa-solid fa-bullseye text-red-500 mb-2 text-2xl"></i>
+                  <span className="text-2xl font-bold">{profile.gamesPlayed}</span>
+                  <span className="text-xs text-gray-500 uppercase">Matches</span>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        function LobbyView({ players, setPlayers, onNext, getRandomName }) {
+          const [newName, setNewName] = useState("");
+
+          const addPlayer = () => {
+            if (newName.trim()) {
+              sfx.playTap();
+              setPlayers([...players, { id: Date.now(), name: newName.trim(), avatar: Math.floor(Math.random()*5)+1 }]);
+              setNewName("");
+            }
+          };
+
+          const removePlayer = (id) => {
+            sfx.playTap();
+            setPlayers(players.filter(p => p.id !== id));
+          };
+
+          return (
+            <div className="flex flex-col h-full p-6 space-y-6 overflow-hidden">
+              <div className="flex-none text-center">
+                <h2 className="text-2xl font-bold text-cyan-400 uppercase tracking-widest">Assemble Squad</h2>
+                <p className="text-sm text-gray-500">{players.length} Players Connected</p>
+              </div>
+
+              <div className="flex-none flex space-x-2">
+                <input 
+                  type="text" 
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addPlayer()}
+                  placeholder="Player name..."
+                  className="flex-1 bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 text-white"
+                />
+                <button onClick={() => setNewName(getRandomName())} className="flex-none p-3 bg-gray-800 rounded-xl hover:bg-gray-700 text-cyan-400">
+                  <i className="fa-solid fa-wand-magic-sparkles"></i>
+                </button>
+                <button onClick={addPlayer} className="flex-none p-3 bg-cyan-600 rounded-xl hover:bg-cyan-500 text-white">
+                  <i className="fa-solid fa-user-plus"></i>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar min-h-0 pr-1 pb-2">
+                {players.map((p, i) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-gray-900/60 border border-gray-800 rounded-xl hover:border-gray-700 transition-colors animate-fade-in-up" style={{ animationDelay: `${i * 0.05}s` }}>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center text-xl border border-gray-700">
+                        {['🤖','👽','👻','🤡','🤠'][p.avatar - 1] || '👤'}
+                      </div>
+                      <span className="font-semibold text-gray-200">{p.name}</span>
+                    </div>
+                    <button onClick={() => removePlayer(p.id)} className="text-gray-500 hover:text-red-400 p-2">
+                      <i className="fa-solid fa-user-xmark"></i>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                onClick={onNext}
+                disabled={players.length < 3}
+                className={`flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-all ${
+                  players.length >= 3 
+                    ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]' 
+                    : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {players.length < 3 ? '3 Players Minimum' : 'Configure'}
+              </button>
+            </div>
+          );
+        }
+
+        function SetupView({ players, settings, setSettings, onStart, onBack }) {
+          const totalSpecial = settings.undercoverCount + settings.mrWhiteCount + (settings.inspector ? 1 : 0) + (settings.jester ? 1 : 0);
+          const civCount = Math.max(0, players.length - totalSpecial);
+
+          const totalRolesCalculated = Math.max(players.length, totalSpecial);
+          const civPct = (civCount / totalRolesCalculated) * 100;
+          const ucPct = (settings.undercoverCount / totalRolesCalculated) * 100;
+          const mwPct = (settings.mrWhiteCount / totalRolesCalculated) * 100;
+
+          return (
+            <div className="flex flex-col h-full p-6 space-y-6 overflow-hidden">
+              <div className="flex-none flex items-center space-x-4 mb-2">
+                <button onClick={onBack} className="text-gray-400 hover:text-white p-2"><i className="fa-solid fa-rotate-left"></i></button>
+                <h2 className="text-2xl font-bold text-cyan-400 uppercase tracking-widest flex-1 text-center pr-8">Setup</h2>
+              </div>
+
+              <div className="flex-none space-y-2">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                  <span className="text-green-400">Civ: {civCount}</span>
+                  <span className="text-yellow-400">Und: {settings.undercoverCount}</span>
+                  <span className="text-gray-400">MrW: {settings.mrWhiteCount}</span>
+                </div>
+                <div className="w-full h-4 rounded-full overflow-hidden flex border border-gray-800">
+                  <div style={{ width: `${civPct}%` }} className="bg-green-500 transition-all duration-300" />
+                  <div style={{ width: `${ucPct}%` }} className="bg-yellow-500 transition-all duration-300" />
+                  <div style={{ width: `${mwPct}%` }} className="bg-gray-300 transition-all duration-300" />
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar min-h-0 pb-2">
+                
+                <div className="flex space-x-3">
+                    <div onClick={() => { sfx.playTap(); setSettings({...settings, inspector: !settings.inspector}); }} className={`flex-1 p-3 rounded-xl border cursor-pointer flex flex-col items-center justify-center space-y-1 transition-all ${settings.inspector ? 'bg-blue-900/40 border-blue-500 neon-border-blue' : 'bg-gray-900/60 border-gray-800'}`}>
+                        <i className={`fa-solid fa-magnifying-glass text-xl ${settings.inspector ? 'text-blue-400' : 'text-gray-500'}`}></i>
+                        <span className={`text-xs font-bold uppercase ${settings.inspector ? 'text-blue-400' : 'text-gray-500'}`}>Inspector</span>
+                    </div>
+                    <div onClick={() => { sfx.playTap(); setSettings({...settings, jester: !settings.jester}); }} className={`flex-1 p-3 rounded-xl border cursor-pointer flex flex-col items-center justify-center space-y-1 transition-all ${settings.jester ? 'bg-pink-900/40 border-pink-500 neon-border-pink' : 'bg-gray-900/60 border-gray-800'}`}>
+                        <i className={`fa-solid fa-masks-theater text-xl ${settings.jester ? 'text-pink-400' : 'text-gray-500'}`}></i>
+                        <span className={`text-xs font-bold uppercase ${settings.jester ? 'text-pink-400' : 'text-gray-500'}`}>Jester</span>
+                    </div>
+                </div>
+
+                <div className="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="font-bold text-yellow-400 flex items-center"><i className="fa-solid fa-eye mr-2"></i> Undercovers</span>
+                    <span className="text-xl font-bold">{settings.undercoverCount}</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max={players.length} 
+                    value={settings.undercoverCount}
+                    onChange={(e) => { sfx.playTap(); setSettings({...settings, undercoverCount: parseInt(e.target.value)}) }}
+                    className="w-full accent-yellow-500 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+
+                <div className="bg-gray-900/60 p-4 rounded-xl border border-gray-800">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="font-bold text-gray-300 flex items-center"><i className="fa-solid fa-user-secret mr-2"></i> Mr White</span>
+                    <span className="text-xl font-bold">{settings.mrWhiteCount}</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max={players.length} 
+                    value={settings.mrWhiteCount}
+                    onChange={(e) => { sfx.playTap(); setSettings({...settings, mrWhiteCount: parseInt(e.target.value)}) }}
+                    className="w-full accent-gray-300 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+
+                <div 
+                  onClick={() => { sfx.playTap(); setSettings({...settings, chaosMode: !settings.chaosMode}) }}
+                  className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                    settings.chaosMode ? 'bg-purple-900/30 border-purple-500 neon-border-purple' : 'bg-gray-900/60 border-gray-800'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-lg ${settings.chaosMode ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-500'}`}>
+                      <i className={`fa-solid fa-bolt ${settings.chaosMode ? 'animate-pulse' : ''}`}></i>
+                    </div>
+                    <div>
+                      <p className={`font-bold uppercase tracking-wider ${settings.chaosMode ? 'text-purple-400' : 'text-gray-400'}`}>Chaos Mode</p>
+                      <p className="text-xs text-gray-500">Random rules per round</p>
+                    </div>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${settings.chaosMode ? 'bg-purple-500' : 'bg-gray-700'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${settings.chaosMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </div>
+
+              </div>
+
+              <button 
+                onClick={onStart}
+                className="flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-all bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]"
+              >
+                Start Game
+              </button>
+            </div>
+          );
+        }
+
+        function RevealView({ gameState, setGameState, setView }) {
+          const [isHolding, setIsHolding] = useState(false);
+          const [progress, setProgress] = useState(0);
+          const [revealed, setRevealed] = useState(false);
+          const holdTimerRef = useRef(null);
+
+          const currentPlayer = gameState.players[gameState.currentPlayerRevealIndex];
+
+          const handlePointerDown = () => {
+            if (revealed) return;
+            sfx.playTap();
+            setIsHolding(true);
+            let p = 0;
+            holdTimerRef.current = setInterval(() => {
+              p += 5;
+              setProgress(p);
+              if (p >= 100) {
+                clearInterval(holdTimerRef.current);
+                setIsHolding(false);
+                setRevealed(true);
+                sfx.playReveal();
+              }
+            }, 50);
+          };
+
+          const handlePointerUp = () => {
+            if (revealed) return;
+            setIsHolding(false);
+            setProgress(0);
+            clearInterval(holdTimerRef.current);
+          };
+
+          const handleNext = () => {
+            sfx.playTap();
+            if (gameState.currentPlayerRevealIndex < gameState.players.length - 1) {
+              setGameState({ ...gameState, currentPlayerRevealIndex: gameState.currentPlayerRevealIndex + 1 });
+              setRevealed(false);
+              setProgress(0);
+            } else {
+              startDiscussion(gameState, setGameState, setView);
+            }
+          };
+
+          if (!currentPlayer) return null;
+
+          return (
+            <div className="absolute inset-0 z-50 bg-gray-950 flex flex-col items-center justify-center p-6 text-center overflow-y-auto">
+              
+              {!revealed ? (
+                <div className="space-y-12 w-full max-w-sm">
+                  <div className="space-y-4">
+                    <h3 className="text-gray-500 uppercase tracking-widest text-sm">Pass device to</h3>
+                    <h1 className="text-5xl font-black text-cyan-400 tracking-tight">{currentPlayer.name}</h1>
+                  </div>
+
+                  <div 
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handlePointerUp}
+                    onPointerLeave={handlePointerUp}
+                    className="relative w-48 h-48 mx-auto bg-gray-900 border-2 border-dashed border-gray-700 rounded-full flex items-center justify-center cursor-pointer select-none overflow-hidden touch-none"
+                  >
+                    <div 
+                      className="absolute bottom-0 w-full bg-cyan-600/30 transition-all duration-75"
+                      style={{ height: `${progress}%` }}
+                    />
+                    <div className={`relative z-10 flex flex-col items-center space-y-2 ${isHolding ? 'scale-110' : 'scale-100'} transition-transform`}>
+                      <i className={`fa-solid fa-eye text-4xl ${isHolding ? 'text-cyan-400 animate-pulse' : 'text-gray-500'}`}></i>
+                      <span className={`font-bold uppercase tracking-wider text-sm ${isHolding ? 'text-cyan-400' : 'text-gray-500'}`}>Hold to Reveal</span>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-xs">Ensure no one else is looking.</p>
+                </div>
+              ) : (
+                <div className={`space-y-8 w-full max-w-sm animate-fade-in-up p-8 rounded-3xl border ${
+                  currentPlayer.role === 'civilian' ? 'bg-green-950/40 border-green-500/50 neon-border-green' :
+                  currentPlayer.role === 'undercover' ? 'bg-yellow-950/40 border-yellow-500/50 neon-border-yellow' :
+                  currentPlayer.role === 'inspector' ? 'bg-blue-950/40 border-blue-500/50 neon-border-blue' :
+                  currentPlayer.role === 'jester' ? 'bg-pink-950/40 border-pink-500/50 neon-border-pink' :
+                  'bg-gray-100 border-white shadow-[0_0_20px_rgba(255,255,255,0.8)]'
+                }`}>
+                  
+                  <div className="space-y-2">
+                    <h3 className="text-gray-400 uppercase tracking-widest text-sm font-bold">Your Role</h3>
+                    <h1 className={`text-4xl font-black uppercase tracking-tight ${
+                      currentPlayer.role === 'civilian' ? 'text-green-400 neon-text-green' :
+                      currentPlayer.role === 'undercover' ? 'text-yellow-400' :
+                      currentPlayer.role === 'inspector' ? 'text-blue-400 neon-text-blue' :
+                      currentPlayer.role === 'jester' ? 'text-pink-400 neon-text-pink' :
+                      'text-gray-900 glitch-anim'
+                    }`}>
+                      {currentPlayer.role === 'civilian' ? 'Civilian' : currentPlayer.role === 'undercover' ? 'Undercover' : currentPlayer.role === 'inspector' ? 'Inspector' : currentPlayer.role === 'jester' ? 'Jester' : 'Mr White'}
+                    </h1>
+                  </div>
+
+                  <div className="py-8">
+                    <p className={`text-sm uppercase tracking-widest mb-2 ${currentPlayer.role === 'mrwhite' ? 'text-gray-600' : 'text-gray-400'}`}>Secret Word</p>
+                    {currentPlayer.role === 'mrwhite' ? (
+                      <div className="text-3xl font-black text-gray-900">CLASSIFIED</div>
+                    ) : (
+                      <div className="text-4xl font-black text-white">
+                        {currentPlayer.word}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className={`text-sm ${currentPlayer.role === 'mrwhite' ? 'text-gray-700 font-bold' : 'text-gray-400'}`}>
+                    {currentPlayer.role === 'civilian' && "Find the intruders. Stay discreet."}
+                    {currentPlayer.role === 'undercover' && "Blend in. Your word is different."}
+                    {currentPlayer.role === 'inspector' && "You have the civilian word. Use your secret action to inspect one player."}
+                    {currentPlayer.role === 'jester' && "You have the civilian word. Get eliminated in the FIRST round to win alone!"}
+                    {currentPlayer.role === 'mrwhite' && "You have no word. Guess it and survive."}
+                  </p>
+
+                  <button 
+                    onClick={handleNext}
+                    className={`flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-all mt-8 ${
+                      currentPlayer.role === 'mrwhite' ? 'bg-gray-900 text-white hover:bg-black' : 'bg-white/10 hover:bg-white/20 text-white'
+                    }`}
+                  >
+                    I Understand
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        const startDiscussion = (gameState, setGameState, setView) => {
+          let activeChaos = null;
+          if (Math.random() < 0.3) {
+              activeChaos = CHAOS_MODIFIERS[Math.floor(Math.random() * CHAOS_MODIFIERS.length)];
+              sfx.playDramatic();
+          }
+
+          const alivePlayers = gameState.players.filter(p => p.isAlive);
+          const randomSpeaker = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+
+          setGameState(prev => ({ 
+            ...prev, 
+            phase: 'discussion', 
+            chaosActive: activeChaos, 
+            firstSpeakerId: randomSpeaker.id, 
+            votes: {} 
+          }));
+          setView('discussion');
+        };
+
+        function DiscussionView({ gameState, setGameState, setView, settings }) {
+          const alivePlayers = gameState.players.filter(p => p.isAlive);
+          const inspectorAlive = alivePlayers.some(p => p.role === 'inspector');
+          const canInspect = inspectorAlive && !gameState.inspectorUsed;
+          
+          return (
+            <div className="flex flex-col h-full p-6 space-y-6 overflow-hidden">
+              
+              <div className="flex-none text-center space-y-1">
+                <h2 className="text-xl font-bold text-cyan-400 uppercase tracking-widest">Round {gameState.round}</h2>
+                <p className="text-sm text-gray-400">Describe your word in 1 sentence.</p>
+              </div>
+
+              {settings.chaosMode && gameState.chaosActive && (
+                <div className="flex-none bg-purple-900/40 border border-purple-500 rounded-xl p-4 flex items-start space-x-4 animate-pulse neon-border-purple">
+                  <div className="bg-purple-600 p-3 rounded-lg text-white flex items-center justify-center">
+                    <i className={`fa-solid ${gameState.chaosActive.icon} text-xl`}></i>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-purple-400 uppercase tracking-wider">{gameState.chaosActive.name}</h3>
+                    <p className="text-xs text-purple-200 mt-1">{gameState.chaosActive.desc}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar min-h-0 pb-2">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Active Agents ({alivePlayers.length})</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {alivePlayers.map(p => {
+                    const isFirst = gameState.firstSpeakerId === p.id;
+                    return (
+                    <div key={p.id} className={`relative bg-gray-900 border ${isFirst ? 'border-cyan-500 neon-border-cyan' : 'border-gray-800'} rounded-xl p-3 flex flex-col items-center justify-center text-center`}>
+                       
+                       {isFirst && <div className="absolute -top-3 right-0 bg-cyan-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-bounce shadow-[0_0_10px_#06b6d4]">1ST</div>}
+                       
+                       <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-2xl mb-2 border border-gray-700">
+                        {['🤖','👽','👻','🤡','🤠'][p.avatar - 1] || '👤'}
+                      </div>
+                      <span className="font-bold text-sm text-gray-200 truncate w-full">{p.name}</span>
+                    </div>
+                  )})}
+                </div>
+              </div>
+
+              <div className="flex-none space-y-3">
+                  {canInspect && (
+                      <button onClick={() => { sfx.playTap(); setView('inspector'); }} className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider bg-blue-900/40 border border-blue-500 text-blue-400 hover:bg-blue-800/50 transition-all shadow-[0_0_10px_rgba(59,130,246,0.3)]">
+                          <i className="fa-solid fa-magnifying-glass mr-2"></i> Inspector Action
+                      </button>
+                  )}
+                  <button 
+                    onClick={() => { sfx.playTap(); setView('voting'); }}
+                    className="w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all"
+                  >
+                    Proceed to Vote
+                  </button>
+              </div>
+            </div>
+          );
+        }
+
+        function InspectorView({ gameState, setGameState, setView }) {
+            const [step, setStep] = useState('auth'); 
+            const [targetId, setTargetId] = useState(null);
+            
+            const alivePlayers = gameState.players.filter(p => p.isAlive && p.role !== 'inspector');
+            const targetPlayer = gameState.players.find(p => p.id === targetId);
+
+            const handleInspect = () => {
+                sfx.playReveal();
+                setStep('reveal');
+            };
+
+            const handleDone = () => {
+                sfx.playTap();
+                setGameState({...gameState, inspectorUsed: true});
+                setView('discussion');
+            };
+
+            if (step === 'auth') {
+                return (
+                    <div className="flex flex-col h-full p-6 justify-center items-center text-center space-y-8 absolute inset-0 bg-gray-950 z-50">
+                        <i className="fa-solid fa-user-secret text-6xl text-blue-400"></i>
+                        <div>
+                            <h2 className="text-3xl font-black text-blue-400 uppercase neon-text-blue">Secret Action</h2>
+                            <p className="text-gray-400 mt-2">Pass the device to the Inspector.</p>
+                        </div>
+                        <button onClick={() => { sfx.playTap(); setStep('select'); }} className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-white uppercase shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-colors">I am the Inspector</button>
+                    </div>
+                );
+            }
+
+            if (step === 'select') {
+                return (
+                    <div className="flex flex-col h-full p-6 space-y-6 overflow-hidden absolute inset-0 bg-gray-950 z-50">
+                        <div className="flex-none text-center space-y-1">
+                            <h2 className="text-2xl font-black text-blue-400 uppercase tracking-widest">Inspection</h2>
+                            <p className="text-sm text-gray-400">Select one player to reveal their true role.</p>
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar min-h-0 pr-1 pb-2">
+                            {alivePlayers.map(p => (
+                                <div key={p.id} onClick={() => { sfx.playTap(); setTargetId(p.id); }} className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center space-x-4 ${targetId === p.id ? 'bg-blue-900/40 border-blue-500 neon-border-blue' : 'bg-gray-900/60 border-gray-800'}`}>
+                                    <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl border border-gray-700">
+                                        {['🤖','👽','👻','🤡','🤠'][p.avatar - 1] || '👤'}
+                                    </div>
+                                    <span className={`font-bold text-lg flex-1 ${targetId === p.id ? 'text-blue-400' : 'text-gray-200'}`}>{p.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <button onClick={handleInspect} disabled={!targetId} className={`flex-none w-full py-4 rounded-xl font-bold text-lg uppercase transition-all ${targetId ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'bg-gray-800 text-gray-500 cursor-not-allowed'}`}>Inspect Player</button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="flex flex-col h-full p-6 justify-center items-center text-center space-y-8 absolute inset-0 bg-gray-950 z-50 animate-fade-in-up">
+                    <h3 className="text-gray-500 uppercase tracking-widest text-sm">{targetPlayer.name}'s Role is</h3>
+                    <div className={`p-8 rounded-3xl border-2 w-full max-w-xs ${
+                        targetPlayer.role === 'civilian' ? 'bg-green-900/20 border-green-500/50' :
+                        targetPlayer.role === 'undercover' ? 'bg-yellow-900/20 border-yellow-500/50' :
+                        targetPlayer.role === 'jester' ? 'bg-pink-900/20 border-pink-500/50' :
+                        'bg-gray-800 border-gray-400'
+                    }`}>
+                        <h1 className={`text-4xl font-black uppercase tracking-tight ${
+                            targetPlayer.role === 'civilian' ? 'text-green-400 neon-text-green' :
+                            targetPlayer.role === 'undercover' ? 'text-yellow-400' :
+                            targetPlayer.role === 'jester' ? 'text-pink-400 neon-text-pink' :
+                            'text-white'
+                        }`}>
+                            {targetPlayer.role === 'civilian' ? 'Civilian' : targetPlayer.role === 'undercover' ? 'Undercover' : targetPlayer.role === 'jester' ? 'Jester' : 'Mr White'}
+                        </h1>
+                    </div>
+                    <button onClick={handleDone} className="w-full py-4 bg-gray-800 hover:bg-gray-700 rounded-xl font-bold text-white uppercase mt-12 transition-colors">Finish Inspection</button>
+                </div>
+            );
+        }
+
+        function VotingView({ gameState, setGameState, setView }) {
+          const [selectedPlayerId, setSelectedPlayerId] = useState(null);
+          const alivePlayers = gameState.players.filter(p => p.isAlive);
+
+          const confirmVote = () => {
+            sfx.playEliminate();
+            
+            const updatedPlayers = gameState.players.map(p => {
+              if (p.id === selectedPlayerId) return { ...p, isAlive: false };
+              return p;
+            });
+
+            setGameState({
+              ...gameState,
+              players: updatedPlayers,
+              eliminatedThisRound: gameState.players.find(p => p.id === selectedPlayerId)
+            });
+
+            setView('eliminate');
+          };
+
+          return (
+            <div className="flex flex-col h-full p-6 space-y-6 overflow-hidden">
+              <div className="flex-none text-center space-y-1">
+                <h2 className="text-2xl font-black text-red-500 uppercase tracking-widest neon-text-red">Elimination</h2>
+                <p className="text-sm text-gray-400">Select the prime suspect.</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar min-h-0 pr-1 pb-2">
+                {alivePlayers.map(p => (
+                  <div 
+                    key={p.id} 
+                    onClick={() => { sfx.playTap(); setSelectedPlayerId(p.id); }}
+                    className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center space-x-4 ${
+                      selectedPlayerId === p.id 
+                        ? 'bg-red-900/40 border-red-500 neon-border-red' 
+                        : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
+                    }`}
+                  >
+                     <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl border border-gray-700">
+                        {['🤖','👽','👻','🤡','🤠'][p.avatar - 1] || '👤'}
+                    </div>
+                    <span className={`font-bold text-lg flex-1 ${selectedPlayerId === p.id ? 'text-red-400' : 'text-gray-200'}`}>
+                      {p.name}
+                    </span>
+                    {selectedPlayerId === p.id && <i className="fa-solid fa-bullseye text-red-500 animate-pulse"></i>}
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                onClick={confirmVote}
+                disabled={!selectedPlayerId}
+                className={`flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider transition-all ${
+                  selectedPlayerId 
+                    ? 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
+                    : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Eject Player
+              </button>
+            </div>
+          );
+        }
+
+        function EliminateView({ gameState, setGameState, setView, addXP }) {
+          const [guess, setGuess] = useState("");
+          const [mrWhiteResult, setMrWhiteResult] = useState(null);
+          const eliminated = gameState.eliminatedThisRound;
+
+          const checkWinCondition = () => {
+            const alive = gameState.players.filter(p => p.isAlive);
+            const aliveCivs = alive.filter(p => p.role === 'civilian' || p.role === 'inspector' || p.role === 'jester').length;
+            const aliveUC = alive.filter(p => p.role === 'undercover').length;
+            const aliveMW = alive.filter(p => p.role === 'mrwhite').length;
+
+            if (eliminated.role === 'jester' && gameState.round === 1) return { over: true, winners: 'jester', reason: 'The Jester successfully tricked you in Round 1!' };
+
+            if (mrWhiteResult === 'win') return { over: true, winners: 'mrwhite', reason: 'Mr White guessed the word!' };
+            if (mrWhiteResult === 'lose' && aliveUC === 0 && aliveMW === 0) return { over: true, winners: 'civilian', reason: 'All threats eliminated!' };
+            
+            if (aliveUC === 0 && aliveMW === 0) return { over: true, winners: 'civilian', reason: 'All threats eliminated!' };
+            if (aliveCivs <= 1) return { over: true, winners: 'impostors', reason: 'Too few civilians left.' };
+
+            return { over: false };
+          };
+
+          const handleNext = () => {
+            sfx.playTap();
+            const status = checkWinCondition();
+            if (status.over) {
+              sfx.playWin();
+              setGameState({ ...gameState, result: status });
+              setView('end');
+            } else {
+              setGameState({ ...gameState, round: gameState.round + 1 });
+              startDiscussion(gameState, setGameState, setView);
+            }
+          };
+
+          const submitMrWhiteGuess = () => {
+            sfx.playDramatic();
+            if (guess.toLowerCase().trim() === gameState.wordPair.c.toLowerCase()) {
+              setMrWhiteResult('win');
+            } else {
+              setMrWhiteResult('lose');
+            }
+          };
+
+          return (
+            <div className="flex flex-col h-full p-6 justify-center text-center space-y-8 animate-fade-in-up overflow-y-auto">
+              
+              {!mrWhiteResult && (
+                <React.Fragment>
+                  <div className="space-y-4">
+                    <h2 className="text-4xl font-black text-gray-300 uppercase">{eliminated.name}</h2>
+                    <p className="text-xl text-gray-500">was eliminated.</p>
+                  </div>
+
+                  <div className={`p-8 rounded-3xl border-2 ${
+                    eliminated.role === 'civilian' ? 'bg-green-900/20 border-green-500/50' :
+                    eliminated.role === 'undercover' ? 'bg-yellow-900/20 border-yellow-500/50' :
+                    eliminated.role === 'inspector' ? 'bg-blue-900/20 border-blue-500/50' :
+                    eliminated.role === 'jester' ? 'bg-pink-900/20 border-pink-500/50' :
+                    'bg-gray-800 border-gray-400'
+                  }`}>
+                    <p className="text-sm uppercase tracking-widest text-gray-400 mb-2">Their Role</p>
+                    <h1 className={`text-4xl font-black uppercase tracking-tight ${
+                      eliminated.role === 'civilian' ? 'text-green-400' :
+                      eliminated.role === 'undercover' ? 'text-yellow-400' :
+                      eliminated.role === 'inspector' ? 'text-blue-400' :
+                      eliminated.role === 'jester' ? 'text-pink-400' :
+                      'text-white'
+                    }`}>
+                      {eliminated.role === 'civilian' ? 'Civilian' : eliminated.role === 'undercover' ? 'Undercover' : eliminated.role === 'inspector' ? 'Inspector' : eliminated.role === 'jester' ? 'Jester' : 'Mr White'}
+                    </h1>
+                  </div>
+                </React.Fragment>
+              )}
+
+              {eliminated.role === 'mrwhite' && mrWhiteResult === null && (
+                <div className="bg-gray-900 border border-cyan-500 p-6 rounded-2xl space-y-4 neon-border-cyan shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                  <h3 className="font-bold text-cyan-400 uppercase tracking-widest">Last Chance</h3>
+                  <p className="text-sm text-gray-300">Mr White, guess the civilian word to steal the win.</p>
+                  <input 
+                    type="text" 
+                    value={guess}
+                    onChange={(e) => setGuess(e.target.value)}
+                    className="w-full bg-gray-950 border border-gray-700 rounded-xl px-4 py-3 text-center text-xl text-white focus:border-cyan-500 outline-none"
+                    placeholder="Enter word..."
+                  />
+                  <button onClick={submitMrWhiteGuess} className="flex-none w-full py-3 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-bold text-white transition-colors">
+                    Submit
+                  </button>
+                </div>
+              )}
+
+              {mrWhiteResult === 'win' && (
+                <div className="space-y-6">
+                  <i className="fa-solid fa-crown text-6xl mx-auto text-yellow-400 animate-bounce block"></i>
+                  <h2 className="text-4xl font-black text-white uppercase glitch-anim">Correct!</h2>
+                  <p className="text-xl text-gray-400">The word was <span className="text-white font-bold">{gameState.wordPair.c}</span></p>
+                </div>
+              )}
+
+              {mrWhiteResult === 'lose' && (
+                <div className="space-y-6">
+                  <i className="fa-solid fa-skull text-6xl mx-auto text-red-500 block"></i>
+                  <h2 className="text-4xl font-black text-red-500 uppercase">Incorrect!</h2>
+                  <p className="text-xl text-gray-400">The word was <span className="text-white font-bold">{gameState.wordPair.c}</span></p>
+                </div>
+              )}
+
+              {!(eliminated.role === 'mrwhite' && mrWhiteResult === null) && (
+                <button 
+                  onClick={handleNext}
+                  className="flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white transition-all mt-8"
+                >
+                  Continue
+                </button>
+              )}
+
+            </div>
+          );
+        }
+
+        function EndScreenView({ gameState, profile, onRematch, addXP }) {
+          const { winners, reason } = gameState.result;
+          
+          const diffMultiplier = gameState.wordPair.diff === 'hard' ? 2 : (gameState.wordPair.diff === 'medium' ? 1.5 : 1);
+          const roundBonus = gameState.round * 30;
+          const calculatedXP = Math.floor((50 + roundBonus) * diffMultiplier);
+
+          useEffect(() => {
+            addXP(calculatedXP); 
+            
+            const saved = localStorage.getItem('aimsBoardGameProfile');
+            if (saved) {
+              let p = JSON.parse(saved);
+              p.gamesPlayed += 1;
+              if (winners === 'civilian') p.wins += 1; 
+              localStorage.setItem('aimsBoardGameProfile', JSON.stringify(p));
+            }
+          }, []);
+
+          return (
+            <div className="flex flex-col h-full p-6 justify-center items-center text-center space-y-8 absolute inset-0 bg-gray-950 z-50 overflow-y-auto custom-scrollbar">
+              
+              <div className="flex-none space-y-2 mt-8">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest">Game Over</h3>
+                <h1 className={`text-4xl md:text-5xl font-black uppercase tracking-tight ${
+                  winners === 'civilian' ? 'text-green-400 neon-text-green' : 
+                  winners === 'mrwhite' ? 'text-white shadow-[0_0_20px_rgba(255,255,255,0.8)]' : 
+                  winners === 'jester' ? 'text-pink-400 neon-text-pink' : 
+                  'text-yellow-400 neon-border-yellow'
+                }`}>
+                  {winners === 'civilian' ? 'Civilians Win' : winners === 'mrwhite' ? 'Mr White Wins' : winners === 'jester' ? 'Jester Wins' : 'Undercovers Win'}
+                </h1>
+                <p className="text-gray-400">{reason}</p>
+              </div>
+
+              <div className="flex-none w-full bg-gray-900/80 border border-gray-800 rounded-2xl p-6 space-y-6">
+                <div>
+                  <h4 className="text-xs uppercase text-gray-500 mb-2 font-bold tracking-wider">The Words</h4>
+                  <div className="flex justify-center space-x-6">
+                    <div className="text-center">
+                      <span className="block text-xl font-bold text-white">{gameState.wordPair.c}</span>
+                      <span className="text-xs text-green-400 uppercase">Civilian</span>
+                    </div>
+                    {gameState.wordPair.u && (
+                      <div className="text-center">
+                        <span className="block text-xl font-bold text-gray-300">{gameState.wordPair.u}</span>
+                        <span className="text-xs text-yellow-400 uppercase">Undercover</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-800 pt-4">
+                  <h4 className="text-xs uppercase text-gray-500 mb-3 font-bold tracking-wider">Agent Status</h4>
+                  <div className="grid grid-cols-2 gap-2 text-left max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                    {gameState.players.map(p => (
+                      <div key={p.id} className="flex items-center space-x-2 text-sm bg-gray-950 p-2 rounded-lg">
+                        <span className={p.isAlive ? 'text-white' : 'text-gray-600 line-through truncate max-w-[80px]'}>{p.name}</span>
+                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                          p.role === 'civilian' ? 'bg-green-900/50 text-green-400' :
+                          p.role === 'undercover' ? 'bg-yellow-900/50 text-yellow-400' :
+                          p.role === 'inspector' ? 'bg-blue-900/50 text-blue-400' :
+                          p.role === 'jester' ? 'bg-pink-900/50 text-pink-400' :
+                          'bg-gray-800 text-white'
+                        }`}>
+                          {p.role === 'civilian' ? 'CIV' : p.role === 'undercover' ? 'UND' : p.role === 'inspector' ? 'INS' : p.role === 'jester' ? 'JES' : 'MRW'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-none flex items-center space-x-3 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 border border-cyan-800 p-4 rounded-xl w-full">
+                <i className="fa-solid fa-wand-magic-sparkles text-cyan-400 text-xl"></i>
+                <div className="text-left flex-1">
+                  <p className="font-bold text-white">Reward</p>
+                  <p className="text-sm text-cyan-400">+{calculatedXP} XP</p>
+                </div>
+              </div>
+
+              <button 
+                onClick={onRematch}
+                className="flex-none w-full py-4 rounded-xl font-bold text-lg uppercase tracking-wider bg-cyan-600 hover:bg-cyan-500 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)] transition-all flex items-center justify-center space-x-2 mb-8"
+              >
+                <i className="fa-solid fa-rotate-left"></i>
+                <span>Play Again</span>
+              </button>
+
+            </div>
+          );
+        }
+
+        // --- START APP ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>
